@@ -1,0 +1,16 @@
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.deps.json
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.dll
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.pdb
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Domain.dll
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Domain.pdb
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.csproj.AssemblyReference.cache
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.AssemblyInfoInputs.cache
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.AssemblyInfo.cs
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.csproj.CoreCompileInputs.cache
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.sourcelink.json
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerc.670E0CBE.Up2Date
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.dll
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\refint\ECommerce.Application.dll
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.pdb
+D:\ITI\Projects\E-Commerce API\ECommerce.Application\obj\Debug\net8.0\ref\ECommerce.Application.dll

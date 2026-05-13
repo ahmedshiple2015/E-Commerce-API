@@ -4,6 +4,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+using ECommerce.Application.Interfaces.Repositories;
+using ECommerce.Application.Interfaces.Services;
+using ECommerce.Infrastructure.Repositories;
+using ECommerce.Infrastructure.Services;
+using ECommerce.Domain.Enums;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add Controllers
@@ -14,7 +20,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. Configure JWT Authentication
+// 3. Register Services & Repositories (DI)
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// 4. Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]!);
 
@@ -37,6 +49,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// 5. Configure Role-Based Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRole.Admin.ToString()));
+    options.AddPolicy("RequireSellerRole", policy => policy.RequireRole(UserRole.Seller.ToString()));
+    options.AddPolicy("RequireCustomerRole", policy => policy.RequireRole(UserRole.Customer.ToString()));
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -50,7 +70,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// 4. Add Authentication & Authorization
+// 6. Add Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
