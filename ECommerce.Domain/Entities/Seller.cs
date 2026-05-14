@@ -4,10 +4,10 @@ public class Seller
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    public string StoreName { get; set; }
-    public string BusinessRegistration { get; set; }
+    public string StoreName { get; set; } = string.Empty;
+    public string? BusinessRegistration { get; set; }
+    public bool IsApproved { get; set; }
 
-    // Navigation Properties
-    public User User { get; set; }
-    public ICollection<Product> Products { get; set; }
+    public ApplicationUser User { get; set; } = null!;
+    public ICollection<Product> Products { get; set; } = new List<Product>();
 }

@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj": {}
+    "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj": {}
   },
   "projects": {
-    "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\ECommerce.Domain.csproj": {
+    "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\ECommerce.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\ECommerce.Domain.csproj",
-        "projectName": "ECommerce.Domain",
-        "projectPath": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\ECommerce.Domain.csproj",
-        "packagesPath": "C:\\Users\\ahmed\\.nuget\\packages\\",
-        "outputPath": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\obj\\",
+        "projectUniqueName": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\ECommerce.Application.csproj",
+        "projectName": "ECommerce.Application",
+        "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\ECommerce.Application.csproj",
+        "packagesPath": "C:\\Users\\Mahmo\\.nuget\\packages\\",
+        "outputPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\ahmed\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Mahmo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,7 +26,75 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj": {
+                "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.200"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj",
+        "projectName": "ECommerce.Domain",
+        "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj",
+        "packagesPath": "C:\\Users\\Mahmo\\.nuget\\packages\\",
+        "outputPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\Mahmo\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -50,82 +118,8 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48",
-            "net481"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
-        }
-      }
-    },
-    "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj",
-        "projectName": "ECommerce.Infrastructure",
-        "projectPath": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\ahmed\\.nuget\\packages\\",
-        "outputPath": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Infrastructure\\obj\\",
-        "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
-        "configFilePaths": [
-          "C:\\Users\\ahmed\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
-        ],
-        "originalTargetFrameworks": [
-          "net8.0"
-        ],
-        "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
-            "projectReferences": {
-              "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\ECommerce.Domain.csproj": {
-                "projectPath": "D:\\ITI\\Projects\\E-Commerce API\\ECommerce.Domain\\ECommerce.Domain.csproj"
-              }
-            }
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.200"
-      },
-      "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
           "dependencies": {
-            "BCrypt.Net-Next": {
-              "target": "Package",
-              "version": "[4.2.0, )"
-            },
-            "Microsoft.EntityFrameworkCore.SqlServer": {
+            "Microsoft.Extensions.Identity.Stores": {
               "target": "Package",
               "version": "[8.0.0, )"
             }
@@ -146,7 +140,93 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj",
+        "projectName": "ECommerce.Infrastructure",
+        "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Infrastructure\\ECommerce.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\Mahmo\\.nuget\\packages\\",
+        "outputPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Infrastructure\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\Mahmo\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\ECommerce.Application.csproj": {
+                "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Application\\ECommerce.Application.csproj"
+              },
+              "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj": {
+                "projectPath": "E:\\ITI\\Angular_Project\\E-Commerce-API\\ECommerce.Domain\\ECommerce.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.200"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -1,0 +1,16 @@
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.deps.json
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.dll
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Application.pdb
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Domain.dll
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\bin\Debug\net8.0\ECommerce.Domain.pdb
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.csproj.AssemblyReference.cache
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.AssemblyInfoInputs.cache
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.AssemblyInfo.cs
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.csproj.CoreCompileInputs.cache
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.sourcelink.json
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerc.670E0CBE.Up2Date
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.dll
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\refint\ECommerce.Application.dll
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ECommerce.Application.pdb
+E:\ITI\Angular_Project\E-Commerce-API\ECommerce.Application\obj\Debug\net8.0\ref\ECommerce.Application.dll
