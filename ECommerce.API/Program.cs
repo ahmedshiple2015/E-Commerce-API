@@ -8,6 +8,7 @@ using ECommerce.Application.Interfaces;
 using ECommerce.Domain.Entities;
 using ECommerce.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,10 @@ builder.Services.AddControllers()
     });
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+builder.Services.AddResend(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiKey"] ?? string.Empty;
+});
 
 // 2. Configure DbContext (Connection string from appsettings.json)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -30,7 +35,7 @@ builder.Services
     {
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 6;
-        options.SignIn.RequireConfirmedEmail = false;
+        options.SignIn.RequireConfirmedEmail = true;
     })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<AppDbContext>()

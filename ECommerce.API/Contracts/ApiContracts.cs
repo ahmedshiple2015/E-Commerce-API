@@ -6,6 +6,8 @@ namespace ECommerce.API.Contracts;
 public record RegisterRequest(string Email, string Password, string? Phone, string? FullName, UserRole Role);
 public record LoginRequest(string Email, string Password);
 public record AuthResponse(int UserId, string Email, UserRole Role, string Token);
+public record RegistrationResponse(int UserId, string Email, UserRole Role, bool EmailConfirmationRequired);
+public record ResendEmailConfirmationRequest(string Email);
 
 public record AddressRequest(string Label, string Line1, string? Line2, string City, string State, string PostalCode, string Country, bool IsDefaultShipping, bool IsDefaultBilling);
 public record ProfileRequest(string FullName, string? Address, string? PaymentDetails);

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using ECommerce.API.Contracts;
+using ECommerce.Application.Interfaces;
 using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -16,20 +17,23 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole<int>> _roleManager;
+    private readonly IEmailNotificationService _emailNotificationService;
     private readonly IConfiguration _configuration;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole<int>> roleManager,
+        IEmailNotificationService emailNotificationService,
         IConfiguration configuration)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _emailNotificationService = emailNotificationService;
         _configuration = configuration;
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
+    public async Task<ActionResult<RegistrationResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         if (await _userManager.FindByEmailAsync(request.Email) is not null)
         {
@@ -42,7 +46,7 @@ public class AuthController : ControllerBase
             Email = request.Email,
             PhoneNumber = request.Phone,
             Role = request.Role,
-            EmailConfirmed = true,
+            EmailConfirmed = false,
             Profile = new UserProfile { FullName = request.FullName ?? request.Email }
         };
 
@@ -59,7 +63,9 @@ public class AuthController : ControllerBase
             return BadRequest(roleResult.Errors);
         }
 
-        return CreatedAtAction(nameof(Register), new AuthResponse(user.Id, user.Email!, user.Role, await CreateToken(user)));
+        await SendConfirmationEmailAsync(user, cancellationToken);
+
+        return CreatedAtAction(nameof(Register), new RegistrationResponse(user.Id, user.Email!, user.Role, EmailConfirmationRequired: true));
     }
 
     [HttpPost("login")]
@@ -71,7 +77,43 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid email or password.");
         }
 
+        if (!user.EmailConfirmed)
+        {
+            return Unauthorized("Email address is not confirmed.");
+        }
+
         return new AuthResponse(user.Id, user.Email!, user.Role, await CreateToken(user));
+    }
+
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] int userId, [FromQuery] string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        return result.Succeeded ? Ok("Email confirmed successfully.") : BadRequest(result.Errors);
+    }
+
+    [HttpPost("resend-confirmation")]
+    public async Task<IActionResult> ResendConfirmation(ResendEmailConfirmationRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+        {
+            return NoContent();
+        }
+
+        if (user.EmailConfirmed)
+        {
+            return BadRequest("Email address is already confirmed.");
+        }
+
+        await SendConfirmationEmailAsync(user, cancellationToken);
+        return NoContent();
     }
 
     private async Task<string> CreateToken(ApplicationUser user)
@@ -106,5 +148,13 @@ public class AuthController : ControllerBase
         {
             await _roleManager.CreateAsync(new IdentityRole<int>(roleName));
         }
+    }
+
+    private async Task SendConfirmationEmailAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var apiBaseUrl = _configuration["App:ApiBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        var confirmationUrl = $"{apiBaseUrl}/api/auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+        await _emailNotificationService.SendEmailConfirmationAsync(user.Email!, confirmationUrl, cancellationToken);
     }
 }
