@@ -11,6 +11,7 @@ public class Order
     public decimal ShippingAmount { get; set; }
     public OrderStatus Status { get; set; }
     public string ShippingAddress { get; set; } = string.Empty;
+    public string? GuestAccessToken { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsDeleted { get; set; }
 

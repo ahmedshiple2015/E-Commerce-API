@@ -186,8 +186,11 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("GuestAccessToken")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("SessionId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -196,6 +199,12 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GuestAccessToken")
+                        .IsUnique()
+                        .HasFilter("[GuestAccessToken] IS NOT NULL");
+
+                    b.HasIndex("SessionId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -269,6 +278,9 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("GuestAccessToken")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -296,6 +308,10 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GuestAccessToken")
+                        .IsUnique()
+                        .HasFilter("[GuestAccessToken] IS NOT NULL");
 
                     b.HasIndex("UserId");
 

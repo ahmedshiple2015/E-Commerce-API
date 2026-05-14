@@ -163,6 +163,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>
         modelBuilder.Entity<Cart>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.SessionId);
+            entity.HasIndex(e => e.GuestAccessToken).IsUnique().HasFilter("[GuestAccessToken] IS NOT NULL");
             // 1-to-1 with User (optional for guests)
             entity.HasOne(c => c.User)
                   .WithOne(u => u.Cart)
@@ -192,6 +194,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>
             entity.Property(e => e.TaxAmount).HasPrecision(18, 2);
             entity.Property(e => e.ShippingAmount).HasPrecision(18, 2);
             entity.Property(e => e.Status).HasConversion<string>();
+            entity.HasIndex(e => e.GuestAccessToken).IsUnique().HasFilter("[GuestAccessToken] IS NOT NULL");
 
             entity.HasOne(o => o.User)
                   .WithMany(u => u.Orders)

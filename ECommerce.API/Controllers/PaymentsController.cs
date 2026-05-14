@@ -23,7 +23,7 @@ public class PaymentsController : ApiControllerBase
     }
 
     [HttpPost("stripe/payment-intents")]
-    [Authorize(Roles = "Customer,Admin")]
+    [AllowAnonymous]
     public async Task<ActionResult<CreatePaymentIntentResponse>> CreateStripePaymentIntent(CreatePaymentIntentRequest request, CancellationToken cancellationToken)
     {
         var payment = await _db.Payments
@@ -40,7 +40,7 @@ public class PaymentsController : ApiControllerBase
             return OwnershipForbidden();
         }
 
-        if (payment.Order.UserId is null && !IsAdmin)
+        if (payment.Order.UserId is null && !IsAdmin && (string.IsNullOrWhiteSpace(payment.Order.GuestAccessToken) || !FixedTimeEquals(payment.Order.GuestAccessToken, request.GuestAccessToken)))
         {
             return Forbid();
         }
@@ -177,5 +177,27 @@ public class PaymentsController : ApiControllerBase
         }
 
         return payment is null ? NotFound() : Ok(payment.ToDto());
+    }
+
+    [HttpGet("guest/orders/{orderId:int}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetGuestPayment(int orderId, [FromQuery] string guestAccessToken)
+    {
+        var payment = await _db.Payments
+            .Include(p => p.Order)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.OrderId == orderId && p.Order.UserId == null);
+
+        if (payment is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(payment.Order.GuestAccessToken) || !FixedTimeEquals(payment.Order.GuestAccessToken, guestAccessToken))
+        {
+            return Forbid();
+        }
+
+        return Ok(payment.ToDto());
     }
 }

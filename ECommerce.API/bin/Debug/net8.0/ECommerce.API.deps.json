@@ -12,7 +12,8 @@
           "ECommerce.Infrastructure": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.0",
           "Microsoft.EntityFrameworkCore.Design": "8.0.0",
-          "Swashbuckle.AspNetCore": "6.5.0"
+          "Swashbuckle.AspNetCore": "6.5.0",
+          "Swashbuckle.AspNetCore.Swagger": "6.5.0"
         },
         "runtime": {
           "ECommerce.API.dll": {}
@@ -714,7 +715,8 @@
       },
       "ECommerce.Application/1.0.0": {
         "dependencies": {
-          "ECommerce.Domain": "1.0.0"
+          "ECommerce.Domain": "1.0.0",
+          "Swashbuckle.AspNetCore.Swagger": "6.5.0"
         },
         "runtime": {
           "ECommerce.Application.dll": {
@@ -724,6 +726,9 @@
         }
       },
       "ECommerce.Domain/1.0.0": {
+        "dependencies": {
+          "Swashbuckle.AspNetCore.Swagger": "6.5.0"
+        },
         "runtime": {
           "ECommerce.Domain.dll": {
             "assemblyVersion": "1.0.0.0",
@@ -737,7 +742,8 @@
           "ECommerce.Domain": "1.0.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "8.0.0",
           "Microsoft.EntityFrameworkCore.SqlServer": "8.0.0",
-          "Stripe.net": "51.1.0"
+          "Stripe.net": "51.1.0",
+          "Swashbuckle.AspNetCore.Swagger": "6.5.0"
         },
         "runtime": {
           "ECommerce.Infrastructure.dll": {

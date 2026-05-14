@@ -16,12 +16,12 @@ public record ProductRequest(int SellerId, int CategoryId, string Name, string D
 public record ProductQuery(string? Search, int? CategoryId, decimal? MinPrice, decimal? MaxPrice, int? MinRating);
 public record ReviewRequest(int UserId, int ProductId, int Rating, string? Comment);
 
-public record CartItemRequest(int ProductId, int Quantity);
-public record CheckoutRequest(int? UserId, string? SessionId, string ShippingAddress, PaymentMethod PaymentMethod);
+public record CartItemRequest(int ProductId, int Quantity, string? GuestAccessToken = null);
+public record CheckoutRequest(int? UserId, string? SessionId, string ShippingAddress, PaymentMethod PaymentMethod, string? GuestAccessToken = null);
 public record OrderStatusRequest(OrderStatus Status, string? Notes);
 public record PaymentRequest(PaymentMethod PaymentMethod, string? GatewayTransactionId, decimal Amount);
 public record PaymentWebhookRequest(int OrderId, PaymentMethod PaymentMethod, string GatewayTransactionId, string Status, decimal Amount);
-public record CreatePaymentIntentRequest(int OrderId, string? Currency);
+public record CreatePaymentIntentRequest(int OrderId, string? Currency, string? GuestAccessToken = null);
 public record CreatePaymentIntentResponse(string PaymentIntentId, string ClientSecret, long Amount, string Currency, string PublishableKey);
 
 public record SellerRequest(int UserId, string StoreName, string? BusinessRegistration);
@@ -35,9 +35,9 @@ public record CategoryDto(int Id, int? ParentCategoryId, string Name, string? De
 public record ProductImageDto(int Id, string ImageUrl, int SortOrder, bool IsPrimary);
 public record ProductDto(int Id, int SellerId, int CategoryId, string Name, string Description, decimal Price, int Stock, string? ImageUrl, CategoryDto? Category, IEnumerable<ProductImageDto> Images, double AverageRating, int ReviewCount);
 public record ReviewDto(int Id, int ProductId, int UserId, int Rating, string? Comment, DateTime CreatedAt);
-public record CartDto(int Id, int? UserId, string? SessionId, DateTime UpdatedAt, IEnumerable<CartItemDto> Items, decimal Subtotal);
+public record CartDto(int Id, int? UserId, string? SessionId, string? GuestAccessToken, DateTime UpdatedAt, IEnumerable<CartItemDto> Items, decimal Subtotal);
 public record CartItemDto(int Id, int ProductId, string ProductName, decimal UnitPrice, int Quantity, decimal LineTotal);
-public record OrderDto(int Id, int? UserId, decimal TotalAmount, decimal TaxAmount, decimal ShippingAmount, OrderStatus Status, string ShippingAddress, DateTime CreatedAt, IEnumerable<OrderItemDto> Items, PaymentDto? Payment, IEnumerable<OrderStatusHistoryDto> StatusHistory);
+public record OrderDto(int Id, int? UserId, string? GuestAccessToken, decimal TotalAmount, decimal TaxAmount, decimal ShippingAmount, OrderStatus Status, string ShippingAddress, DateTime CreatedAt, IEnumerable<OrderItemDto> Items, PaymentDto? Payment, IEnumerable<OrderStatusHistoryDto> StatusHistory);
 public record OrderItemDto(int Id, int ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal LineTotal);
 public record OrderStatusHistoryDto(int Id, OrderStatus Status, string? Notes, DateTime ChangedAt);
 public record PaymentDto(int Id, int OrderId, string? GatewayTransactionId, PaymentMethod PaymentMethod, PaymentStatus PaymentStatus, decimal Amount, DateTime CreatedAt);
@@ -126,7 +126,7 @@ public static class ApiMappings
     public static CartDto ToDto(this Cart cart)
     {
         var items = cart.Items.Select(i => i.ToDto()).ToList();
-        return new CartDto(cart.Id, cart.UserId, cart.SessionId, cart.UpdatedAt, items, items.Sum(i => i.LineTotal));
+        return new CartDto(cart.Id, cart.UserId, cart.SessionId, cart.GuestAccessToken, cart.UpdatedAt, items, items.Sum(i => i.LineTotal));
     }
 
     public static CartItemDto ToDto(this CartItem item)
@@ -140,6 +140,7 @@ public static class ApiMappings
         return new OrderDto(
             order.Id,
             order.UserId,
+            order.GuestAccessToken,
             order.TotalAmount,
             order.TaxAmount,
             order.ShippingAmount,

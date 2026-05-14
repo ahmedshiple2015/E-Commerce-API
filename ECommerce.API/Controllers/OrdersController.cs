@@ -53,6 +53,30 @@ public class OrdersController : ApiControllerBase
         return result.Select(o => o.ToDto()).ToList();
     }
 
+    [HttpGet("guest/{id:int}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<OrderDto>> GetGuestOrder(int id, [FromQuery] string guestAccessToken)
+    {
+        var order = await _db.Orders
+            .Include(o => o.OrderItems).ThenInclude(i => i.Product)
+            .Include(o => o.Payment)
+            .Include(o => o.StatusHistory)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == id && o.UserId == null);
+
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(order.GuestAccessToken) || !FixedTimeEquals(order.GuestAccessToken, guestAccessToken))
+        {
+            return Forbid();
+        }
+
+        return order.ToDto();
+    }
+
     [HttpPost("checkout")]
     [AllowAnonymous]
     public async Task<ActionResult<OrderDto>> Checkout(CheckoutRequest request)
@@ -77,6 +101,11 @@ public class OrdersController : ApiControllerBase
             return BadRequest("Cart is empty.");
         }
 
+        if (request.UserId is null && (string.IsNullOrWhiteSpace(cart.GuestAccessToken) || !FixedTimeEquals(cart.GuestAccessToken, request.GuestAccessToken)))
+        {
+            return Forbid();
+        }
+
         foreach (var item in cart.Items)
         {
             if (item.Product.Stock < item.Quantity)
@@ -90,6 +119,7 @@ public class OrdersController : ApiControllerBase
         var order = new Order
         {
             UserId = request.UserId,
+            GuestAccessToken = request.UserId.HasValue ? null : cart.GuestAccessToken,
             ShippingAddress = request.ShippingAddress,
             TaxAmount = tax,
             ShippingAmount = ShippingRate,

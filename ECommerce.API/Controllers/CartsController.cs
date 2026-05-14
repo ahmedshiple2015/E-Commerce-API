@@ -19,9 +19,9 @@ public class CartsController : ApiControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<CartDto>> GetCart([FromQuery] int? userId, [FromQuery] string? sessionId)
+    public async Task<ActionResult<CartDto>> GetCart([FromQuery] int? userId, [FromQuery] string? sessionId, [FromQuery] string? guestAccessToken)
     {
-        if (!CanAccessCart(userId, sessionId))
+        if (!await CanAccessCart(userId, sessionId, guestAccessToken))
         {
             return OwnershipForbidden();
         }
@@ -34,7 +34,7 @@ public class CartsController : ApiControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<CartDto>> AddItem([FromQuery] int? userId, [FromQuery] string? sessionId, CartItemRequest request)
     {
-        if (!CanAccessCart(userId, sessionId))
+        if (!await CanAccessCart(userId, sessionId, request.GuestAccessToken))
         {
             return OwnershipForbidden();
         }
@@ -58,7 +58,12 @@ public class CartsController : ApiControllerBase
         var cart = await FindCart(userId, sessionId).FirstOrDefaultAsync();
         if (cart is null)
         {
-            cart = new Cart { UserId = userId, SessionId = sessionId };
+            cart = new Cart
+            {
+                UserId = userId,
+                SessionId = sessionId,
+                GuestAccessToken = userId.HasValue ? null : CreateGuestAccessToken()
+            };
             _db.Carts.Add(cart);
         }
 
@@ -79,13 +84,13 @@ public class CartsController : ApiControllerBase
 
         cart.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        return await GetCart(userId, sessionId);
+        return cart.ToDto();
     }
 
     [HttpPut("items/{productId:int}")]
     public async Task<IActionResult> UpdateQuantity(int productId, [FromQuery] int? userId, [FromQuery] string? sessionId, CartItemRequest request)
     {
-        if (!CanAccessCart(userId, sessionId))
+        if (!await CanAccessCart(userId, sessionId, request.GuestAccessToken))
         {
             return OwnershipForbidden();
         }
@@ -110,9 +115,9 @@ public class CartsController : ApiControllerBase
     }
 
     [HttpDelete("items/{productId:int}")]
-    public async Task<IActionResult> RemoveItem(int productId, [FromQuery] int? userId, [FromQuery] string? sessionId)
+    public async Task<IActionResult> RemoveItem(int productId, [FromQuery] int? userId, [FromQuery] string? sessionId, [FromQuery] string? guestAccessToken)
     {
-        if (!CanAccessCart(userId, sessionId))
+        if (!await CanAccessCart(userId, sessionId, guestAccessToken))
         {
             return OwnershipForbidden();
         }
@@ -138,13 +143,24 @@ public class CartsController : ApiControllerBase
             : carts.Where(c => c.SessionId == sessionId);
     }
 
-    private bool CanAccessCart(int? userId, string? sessionId)
+    private async Task<bool> CanAccessCart(int? userId, string? sessionId, string? guestAccessToken)
     {
         if (userId.HasValue)
         {
             return CanAccessUser(userId.Value);
         }
 
-        return !string.IsNullOrWhiteSpace(sessionId);
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return false;
+        }
+
+        var existingGuestToken = await _db.Carts
+            .Where(c => c.SessionId == sessionId && c.UserId == null)
+            .Select(c => c.GuestAccessToken)
+            .FirstOrDefaultAsync();
+
+        return existingGuestToken is null || FixedTimeEquals(existingGuestToken, guestAccessToken);
     }
+
 }
