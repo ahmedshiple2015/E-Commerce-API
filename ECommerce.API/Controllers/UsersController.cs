@@ -87,9 +87,108 @@ public class UsersController : ApiControllerBase
             IsDefaultShipping = request.IsDefaultShipping
         };
 
+        if (address.IsDefaultShipping)
+        {
+            await _db.Addresses
+                .Where(a => a.UserId == id && a.IsDefaultShipping)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.IsDefaultShipping, false), cancellationToken: default);
+        }
+
+        if (address.IsDefaultBilling)
+        {
+            await _db.Addresses
+                .Where(a => a.UserId == id && a.IsDefaultBilling)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.IsDefaultBilling, false), cancellationToken: default);
+        }
+
         _db.Addresses.Add(address);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetProfile), new { id }, address.ToDto());
+    }
+
+    [HttpPatch("{id:int}/addresses/{addressId:int}/default-shipping")]
+    public async Task<IActionResult> SetDefaultShippingAddress(int id, int addressId)
+    {
+        if (!CanAccessUser(id))
+        {
+            return OwnershipForbidden();
+        }
+
+        var addresses = await _db.Addresses.Where(a => a.UserId == id).ToListAsync();
+        if (!addresses.Any(a => a.Id == addressId))
+        {
+            return NotFound();
+        }
+
+        foreach (var address in addresses)
+        {
+            address.IsDefaultShipping = address.Id == addressId;
+        }
+
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}/addresses/{addressId:int}")]
+    public async Task<IActionResult> DeleteAddress(int id, int addressId)
+    {
+        if (!CanAccessUser(id))
+        {
+            return OwnershipForbidden();
+        }
+
+        var address = await _db.Addresses.FirstOrDefaultAsync(a => a.UserId == id && a.Id == addressId);
+        if (address is null)
+        {
+            return NotFound();
+        }
+
+        _db.Addresses.Remove(address);
+        await _db.SaveChangesAsync();
+
+        if (address.IsDefaultShipping)
+        {
+            var nextAddress = await _db.Addresses
+                .Where(a => a.UserId == id)
+                .OrderBy(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (nextAddress is not null)
+            {
+                nextAddress.IsDefaultShipping = true;
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        return NoContent();
+    }
+
+    [HttpGet("{id:int}/wishlist")]
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetWishlist(int id)
+    {
+        if (!CanAccessUser(id))
+        {
+            return OwnershipForbidden();
+        }
+
+        if (!await _db.Users.AnyAsync(u => u.Id == id))
+        {
+            return NotFound();
+        }
+
+        var products = await _db.WishlistItems
+            .Where(w => w.UserId == id)
+            .Include(w => w.Product)
+                .ThenInclude(p => p.Category)
+            .Include(w => w.Product)
+                .ThenInclude(p => p.Images)
+            .Include(w => w.Product)
+                .ThenInclude(p => p.Reviews)
+            .AsNoTracking()
+            .Select(w => w.Product)
+            .ToListAsync();
+
+        return products.Select(p => p.ToDto()).ToList();
     }
 
     [HttpPost("{id:int}/wishlist/{productId:int}")]

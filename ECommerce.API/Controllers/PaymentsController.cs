@@ -68,6 +68,101 @@ public class PaymentsController : ApiControllerBase
             result.PublishableKey);
     }
 
+    [HttpPost("stripe/checkout-sessions")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CreateCheckoutSessionResponse>> CreateStripeCheckoutSession(CreateCheckoutSessionRequest request, CancellationToken cancellationToken)
+    {
+        var payment = await _db.Payments
+            .Include(p => p.Order)
+            .ThenInclude(o => o.User)
+            .FirstOrDefaultAsync(p => p.OrderId == request.OrderId, cancellationToken);
+
+        if (payment is null)
+        {
+            return NotFound("Payment was not found for this order.");
+        }
+
+        if (payment.Order.UserId is int userId && !CanAccessUser(userId))
+        {
+            return OwnershipForbidden();
+        }
+
+        if (payment.Order.UserId is null && !IsAdmin && (string.IsNullOrWhiteSpace(payment.Order.GuestAccessToken) || !FixedTimeEquals(payment.Order.GuestAccessToken, request.GuestAccessToken)))
+        {
+            return Forbid();
+        }
+
+        if (payment.PaymentMethod != PaymentMethod.CreditCard)
+        {
+            return BadRequest("Stripe Checkout Sessions are available only for credit card payments.");
+        }
+
+        var result = await _paymentGatewayService.CreateCheckoutSessionAsync(
+            payment.OrderId,
+            payment.Amount,
+            request.Currency ?? "usd",
+            request.ReturnUrl,
+            payment.Order.User?.Email,
+            cancellationToken);
+
+        payment.GatewayTransactionId = result.SessionId;
+        payment.PaymentStatus = PaymentStatus.Pending;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new CreateCheckoutSessionResponse(
+            result.SessionId,
+            result.ClientSecret,
+            result.Amount,
+            result.Currency,
+            result.PublishableKey);
+    }
+
+    [HttpGet("stripe/checkout-sessions/{sessionId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CheckoutSessionStatusResponse>> GetStripeCheckoutSessionStatus(string sessionId, [FromQuery] string? guestAccessToken, CancellationToken cancellationToken)
+    {
+        var result = await _paymentGatewayService.GetCheckoutSessionStatusAsync(sessionId, cancellationToken);
+        if (result.OrderId is null)
+        {
+            return NotFound("Checkout session is not linked to an order.");
+        }
+
+        var payment = await _db.Payments
+            .Include(p => p.Order)
+            .ThenInclude(o => o.StatusHistory)
+            .FirstOrDefaultAsync(p => p.OrderId == result.OrderId.Value, cancellationToken);
+
+        if (payment is null)
+        {
+            return NotFound();
+        }
+
+        if (payment.Order.UserId is int userId && !CanAccessUser(userId))
+        {
+            return OwnershipForbidden();
+        }
+
+        if (payment.Order.UserId is null && !IsAdmin && (string.IsNullOrWhiteSpace(payment.Order.GuestAccessToken) || !FixedTimeEquals(payment.Order.GuestAccessToken, guestAccessToken)))
+        {
+            return Forbid();
+        }
+
+        if (result.Status == "complete" || result.PaymentStatus == "paid")
+        {
+            payment.GatewayTransactionId = result.PaymentIntentId ?? result.SessionId;
+            payment.PaymentStatus = PaymentStatus.Completed;
+            payment.Order.Status = OrderStatus.Processing;
+            payment.Order.StatusHistory.Add(new OrderStatusHistory
+            {
+                Status = OrderStatus.Processing,
+                Notes = $"Stripe Checkout Session {result.SessionId} completed."
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        return new CheckoutSessionStatusResponse(result.SessionId, result.Status, result.PaymentStatus, result.PaymentIntentId, result.OrderId);
+    }
+
     [HttpPost("stripe/webhook")]
     [AllowAnonymous]
     public async Task<IActionResult> ReceiveStripeWebhook(CancellationToken cancellationToken)

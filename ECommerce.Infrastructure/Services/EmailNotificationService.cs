@@ -1,67 +1,97 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using ECommerce.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Resend;
 
 namespace ECommerce.Infrastructure.Services;
 
 public class EmailNotificationService : IEmailNotificationService
 {
-    private readonly IResend _resend;
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailNotificationService> _logger;
 
-    public EmailNotificationService(IResend resend, IConfiguration configuration, ILogger<EmailNotificationService> logger)
+    public EmailNotificationService(IConfiguration configuration, ILogger<EmailNotificationService> logger)
     {
-        _resend = resend;
         _configuration = configuration;
         _logger = logger;
     }
 
     public async Task SendEmailConfirmationAsync(string recipientEmail, string confirmationUrl, CancellationToken cancellationToken = default)
     {
-        var message = CreateMessage(
+        await SendAsync(
             recipientEmail,
             "Confirm your email address",
             $"""
-            <p>Welcome to E-Commerce.</p>
+            <p>Welcome to Nexora Gear.</p>
             <p>Please confirm your email address by clicking the link below:</p>
             <p><a href="{confirmationUrl}">Confirm email</a></p>
-            """);
+            """,
+            cancellationToken);
 
-        await _resend.EmailSendAsync(message, cancellationToken);
-        _logger.LogInformation("Email confirmation message sent to {RecipientEmail}.", recipientEmail);
+        _logger.LogInformation("Email confirmation message sent to {RecipientEmail} through Mailtrap API.", recipientEmail);
     }
 
     public async Task SendOrderStatusChangedAsync(string recipientEmail, int orderId, string status, CancellationToken cancellationToken = default)
     {
-        var message = CreateMessage(
+        await SendAsync(
             recipientEmail,
             $"Order #{orderId} status update",
             $"""
             <p>Your order <strong>#{orderId}</strong> status changed to <strong>{status}</strong>.</p>
-            """);
+            <p>Thanks for shopping with Nexora Gear.</p>
+            """,
+            cancellationToken);
 
-        await _resend.EmailSendAsync(message, cancellationToken);
-        _logger.LogInformation("Order {OrderId} status notification sent to {RecipientEmail}.", orderId, recipientEmail);
+        _logger.LogInformation("Order {OrderId} status notification sent to {RecipientEmail} through Mailtrap API.", orderId, recipientEmail);
     }
 
-    private EmailMessage CreateMessage(string recipientEmail, string subject, string html)
+    private async Task SendAsync(string recipientEmail, string subject, string html, CancellationToken cancellationToken)
     {
-        var from = _configuration["Resend:FromEmail"];
-        if (string.IsNullOrWhiteSpace(from))
-        {
-            throw new InvalidOperationException("Resend:FromEmail is not configured.");
-        }
+        var apiToken = GetRequiredSetting("Mailtrap:ApiToken");
+        var apiUrl = _configuration["Mailtrap:ApiUrl"] ?? "https://send.api.mailtrap.io/api/send";
+        var fromEmail = GetRequiredSetting("Mailtrap:FromEmail");
+        var fromName = _configuration["Mailtrap:FromName"] ?? "Nexora Gear";
+        var overrideRecipientEmail = _configuration["Mailtrap:OverrideRecipientEmail"];
+        var actualRecipientEmail = string.IsNullOrWhiteSpace(overrideRecipientEmail)
+            ? recipientEmail
+            : overrideRecipientEmail;
+        var finalHtml = string.IsNullOrWhiteSpace(overrideRecipientEmail)
+            ? html
+            : $"""
+              <p><strong>Development email override.</strong></p>
+              <p>Original recipient: {recipientEmail}</p>
+              <hr />
+              {html}
+              """;
 
-        var message = new EmailMessage
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
+
+        var payload = new
         {
-            From = from,
-            Subject = subject,
-            HtmlBody = html
+            from = new { email = fromEmail, name = fromName },
+            to = new[] { new { email = actualRecipientEmail } },
+            subject,
+            html = finalHtml
         };
 
-        message.To.Add(recipientEmail);
-        return message;
+        var response = await client.PostAsJsonAsync(apiUrl, payload, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"Mailtrap API send failed with {(int)response.StatusCode}: {body}");
+        }
+    }
+
+    private string GetRequiredSetting(string key)
+    {
+        var value = _configuration[key];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException($"{key} is not configured.");
+        }
+
+        return value;
     }
 }

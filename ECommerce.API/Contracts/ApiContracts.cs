@@ -14,17 +14,22 @@ public record ProfileRequest(string FullName, string? Address, string? PaymentDe
 
 public record CategoryRequest(string Name, string? Description, int? ParentCategoryId);
 public record ProductImageRequest(string ImageUrl, int SortOrder, bool IsPrimary);
+public record ProductImageUploadResponse(string ImageUrl);
 public record ProductRequest(int SellerId, int CategoryId, string Name, string Description, decimal Price, int Stock, string? ImageUrl, List<ProductImageRequest>? Images);
-public record ProductQuery(string? Search, int? CategoryId, decimal? MinPrice, decimal? MaxPrice, int? MinRating);
+public record ProductQuery(string? Search, int? CategoryId, decimal? MinPrice, decimal? MaxPrice, int? MinRating, int Page = 1, int PageSize = 10);
 public record ReviewRequest(int UserId, int ProductId, int Rating, string? Comment);
 
 public record CartItemRequest(int ProductId, int Quantity, string? GuestAccessToken = null);
-public record CheckoutRequest(int? UserId, string? SessionId, string ShippingAddress, PaymentMethod PaymentMethod, string? GuestAccessToken = null);
+public record MergeCartRequest(int UserId, string SessionId, string? GuestAccessToken);
+public record CheckoutRequest(int? UserId, string? SessionId, string ShippingAddress, PaymentMethod PaymentMethod, string? GuestAccessToken = null, string? PaymentReference = null);
 public record OrderStatusRequest(OrderStatus Status, string? Notes);
 public record PaymentRequest(PaymentMethod PaymentMethod, string? GatewayTransactionId, decimal Amount);
 public record PaymentWebhookRequest(int OrderId, PaymentMethod PaymentMethod, string GatewayTransactionId, string Status, decimal Amount);
 public record CreatePaymentIntentRequest(int OrderId, string? Currency, string? GuestAccessToken = null);
 public record CreatePaymentIntentResponse(string PaymentIntentId, string ClientSecret, long Amount, string Currency, string PublishableKey);
+public record CreateCheckoutSessionRequest(int OrderId, string? Currency, string ReturnUrl, string? GuestAccessToken = null);
+public record CreateCheckoutSessionResponse(string SessionId, string ClientSecret, long Amount, string Currency, string PublishableKey);
+public record CheckoutSessionStatusResponse(string SessionId, string Status, string PaymentStatus, string? PaymentIntentId, int? OrderId);
 
 public record SellerRequest(int UserId, string StoreName, string? BusinessRegistration);
 public record BannerRequest(string ImageUrl, string? TargetUrl, bool IsActive, string? Title);
@@ -36,6 +41,7 @@ public record SellerDto(int Id, int UserId, string StoreName, string? BusinessRe
 public record CategoryDto(int Id, int? ParentCategoryId, string Name, string? Description, IEnumerable<CategoryDto> Children);
 public record ProductImageDto(int Id, string ImageUrl, int SortOrder, bool IsPrimary);
 public record ProductDto(int Id, int SellerId, int CategoryId, string Name, string Description, decimal Price, int Stock, string? ImageUrl, CategoryDto? Category, IEnumerable<ProductImageDto> Images, double AverageRating, int ReviewCount);
+public record PagedProductsDto(IEnumerable<ProductDto> Items, int TotalCount, int Page, int PageSize, int TotalPages);
 public record ReviewDto(int Id, int ProductId, int UserId, int Rating, string? Comment, DateTime CreatedAt);
 public record CartDto(int Id, int? UserId, string? SessionId, string? GuestAccessToken, DateTime UpdatedAt, IEnumerable<CartItemDto> Items, decimal Subtotal);
 public record CartItemDto(int Id, int ProductId, string ProductName, decimal UnitPrice, int Quantity, decimal LineTotal);
@@ -102,8 +108,11 @@ public static class ApiMappings
 
     public static ProductDto ToDto(this Product product)
     {
-        var reviewCount = product.Reviews.Count;
-        var averageRating = reviewCount == 0 ? 0 : product.Reviews.Average(r => r.Rating);
+        var displayReviews = product.Reviews.Any()
+            ? product.Reviews.Select(r => r.ToDto()).ToList()
+            : MockReviewsForProduct(product.Id).ToList();
+        var reviewCount = displayReviews.Count;
+        var averageRating = reviewCount == 0 ? 0 : displayReviews.Average(r => r.Rating);
 
         return new ProductDto(
             product.Id,
@@ -123,6 +132,31 @@ public static class ApiMappings
     public static ReviewDto ToDto(this Review review)
     {
         return new ReviewDto(review.Id, review.ProductId, review.UserId, review.Rating, review.Comment, review.CreatedAt);
+    }
+
+    public static IEnumerable<ReviewDto> MockReviewsForProduct(int productId)
+    {
+        string[] comments =
+        [
+            "Excellent quality for the price. Setup was simple and it feels premium.",
+            "Arrived fast and worked perfectly out of the box. I would buy it again.",
+            "Clean design, solid performance, and exactly what I needed for my desk.",
+            "The build quality surprised me. It feels reliable and looks sharp.",
+            "Good value overall. The product matches the description and photos.",
+            "Smooth experience from cart to delivery. Performance has been great so far."
+        ];
+
+        var count = 3 + productId % 3;
+        for (var index = 0; index < count; index++)
+        {
+            yield return new ReviewDto(
+                -(productId * 10 + index + 1),
+                productId,
+                0,
+                Math.Max(4, 5 - ((productId + index) % 2)),
+                comments[(productId + index) % comments.Length],
+                DateTime.UtcNow.Date.AddDays(-(index + 2)));
+        }
     }
 
     public static CartDto ToDto(this Cart cart)

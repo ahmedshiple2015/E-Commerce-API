@@ -12,14 +12,16 @@ namespace ECommerce.API.Controllers;
 public class ProductsController : ApiControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IWebHostEnvironment _environment;
 
-    public ProductsController(AppDbContext db)
+    public ProductsController(AppDbContext db, IWebHostEnvironment environment)
     {
         _db = db;
+        _environment = environment;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] ProductQuery query)
+    public async Task<ActionResult<PagedProductsDto>> GetProducts([FromQuery] ProductQuery query)
     {
         var products = _db.Products
             .Include(p => p.Category)
@@ -52,8 +54,18 @@ public class ProductsController : ApiControllerBase
             products = products.Where(p => p.Reviews.Any() && p.Reviews.Average(r => r.Rating) >= query.MinRating.Value);
         }
 
-        var result = await products.AsNoTracking().ToListAsync();
-        return result.Select(p => p.ToDto()).ToList();
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+        var totalCount = await products.CountAsync();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+        page = Math.Min(page, totalPages);
+        var result = await products
+            .OrderBy(p => p.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .AsNoTracking()
+            .ToListAsync();
+        return new PagedProductsDto(result.Select(p => p.ToDto()).ToList(), totalCount, page, pageSize, totalPages);
     }
 
     [HttpGet("{id:int}")]
@@ -68,6 +80,70 @@ public class ProductsController : ApiControllerBase
         return product is null ? NotFound() : product.ToDto();
     }
 
+    [HttpGet("{id:int}/reviews")]
+    public async Task<ActionResult<IEnumerable<ReviewDto>>> GetReviews(int id)
+    {
+        var exists = await _db.Products.AnyAsync(p => p.Id == id);
+        if (!exists)
+        {
+            return NotFound();
+        }
+
+        var reviews = await _db.Reviews
+            .Where(r => r.ProductId == id)
+            .OrderByDescending(r => r.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return Ok(reviews.Any()
+            ? reviews.Select(r => r.ToDto())
+            : ApiMappings.MockReviewsForProduct(id));
+    }
+
+
+
+    [HttpPost("images")]
+    [Authorize(Roles = "Seller,Admin")]
+    [RequestSizeLimit(5_000_000)]
+    public async Task<ActionResult<ProductImageUploadResponse>> UploadProductImage(IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest("Choose an image file.");
+        }
+
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+        var extension = Path.GetExtension(file.FileName);
+        if (!allowedExtensions.Contains(extension))
+        {
+            return BadRequest("Only JPG, PNG, WEBP, and GIF images are allowed.");
+        }
+
+        if (file.Length > 5_000_000)
+        {
+            return BadRequest("Image must be 5 MB or smaller.");
+        }
+
+        var webRoot = _environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(webRoot))
+        {
+            webRoot = Path.Combine(_environment.ContentRootPath, "wwwroot");
+        }
+
+        var uploadDirectory = Path.Combine(webRoot, "uploads", "products");
+        Directory.CreateDirectory(uploadDirectory);
+
+        var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var filePath = Path.Combine(uploadDirectory, fileName);
+
+        await using var stream = System.IO.File.Create(filePath);
+        await file.CopyToAsync(stream, cancellationToken);
+
+        var imageUrl = $"/uploads/products/{fileName}";
+        return Ok(new ProductImageUploadResponse(imageUrl));
+    }
+
+
     [HttpPost]
     [Authorize(Roles = "Seller,Admin")]
     public async Task<ActionResult<ProductDto>> CreateProduct(ProductRequest request)
@@ -75,6 +151,11 @@ public class ProductsController : ApiControllerBase
         if (!await CanManageSellerAsync(request.SellerId))
         {
             return Forbid();
+        }
+
+        if (request.Price < 0 || request.Stock < 0)
+        {
+            return BadRequest("Price and stock cannot be negative.");
         }
 
         var product = new Product
@@ -108,6 +189,11 @@ public class ProductsController : ApiControllerBase
         if (!await CanManageSellerAsync(product.SellerId) || (!IsAdmin && request.SellerId != product.SellerId))
         {
             return Forbid();
+        }
+
+        if (request.Price < 0 || request.Stock < 0)
+        {
+            return BadRequest("Price and stock cannot be negative.");
         }
 
         product.SellerId = request.SellerId;

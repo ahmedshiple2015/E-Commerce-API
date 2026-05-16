@@ -116,18 +116,22 @@ public class OrdersController : ApiControllerBase
 
         var subtotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
         var tax = Math.Round(subtotal * TaxRate, 2);
+        var instantPayment = request.PaymentMethod is PaymentMethod.PayPal or PaymentMethod.Wallet;
+        var initialStatus = instantPayment ? OrderStatus.Processing : OrderStatus.Pending;
+        var paymentStatus = instantPayment ? PaymentStatus.Completed : PaymentStatus.Pending;
+
         var order = new Order
         {
             UserId = request.UserId,
-            GuestAccessToken = request.UserId.HasValue ? null : cart.GuestAccessToken,
+            GuestAccessToken = request.UserId.HasValue ? null : CreateGuestAccessToken(),
             ShippingAddress = request.ShippingAddress,
             TaxAmount = tax,
             ShippingAmount = ShippingRate,
             TotalAmount = subtotal + tax + ShippingRate,
-            Status = OrderStatus.Pending,
+            Status = initialStatus,
             OrderItems = cart.Items.Select(i => new OrderItem { ProductId = i.ProductId, Quantity = i.Quantity, UnitPrice = i.Product.Price }).ToList(),
-            Payment = new Payment { PaymentMethod = request.PaymentMethod, PaymentStatus = PaymentStatus.Pending, Amount = subtotal + tax + ShippingRate },
-            StatusHistory = new List<OrderStatusHistory> { new() { Status = OrderStatus.Pending, Notes = "Order placed." } }
+            Payment = new Payment { PaymentMethod = request.PaymentMethod, PaymentStatus = paymentStatus, GatewayTransactionId = request.PaymentReference, Amount = subtotal + tax + ShippingRate },
+            StatusHistory = new List<OrderStatusHistory> { new() { Status = initialStatus, Notes = instantPayment ? "Demo payment accepted." : "Order placed." } }
         };
 
         foreach (var item in cart.Items)
@@ -167,6 +171,14 @@ public class OrdersController : ApiControllerBase
             if (sellerId is null || !order.OrderItems.Any(i => i.Product.SellerId == sellerId.Value))
             {
                 return Forbid();
+            }
+        }
+
+        if (order.Status != OrderStatus.Cancelled && request.Status == OrderStatus.Cancelled)
+        {
+            foreach (var item in order.OrderItems)
+            {
+                item.Product.Stock += item.Quantity;
             }
         }
 

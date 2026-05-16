@@ -8,7 +8,6 @@ using ECommerce.Application.Interfaces;
 using ECommerce.Domain.Entities;
 using ECommerce.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
-using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +19,6 @@ builder.Services.AddControllers()
     });
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
-builder.Services.AddResend(options =>
-{
-    options.ApiToken = builder.Configuration["Resend:ApiKey"] ?? string.Empty;
-});
 
 // 2. Configure DbContext (Connection string from appsettings.json)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -70,6 +65,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Angular", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
@@ -80,6 +82,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseCors("Angular");
+
 
 // 4. Add Authentication & Authorization
 app.UseAuthentication();

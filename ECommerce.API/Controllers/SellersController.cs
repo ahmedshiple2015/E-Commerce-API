@@ -18,6 +18,21 @@ public class SellersController : ApiControllerBase
         _db = db;
     }
 
+    [HttpGet("me")]
+    [Authorize(Roles = "Customer,Seller,Admin")]
+    public async Task<ActionResult<SellerDto>> GetCurrentSeller()
+    {
+        if (CurrentUserId is null)
+        {
+            return Unauthorized();
+        }
+
+        var seller = await _db.Sellers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == CurrentUserId.Value);
+
+        return seller is null ? NotFound() : seller.ToDto();
+    }
     [HttpPost]
     [Authorize(Roles = "Customer,Seller,Admin")]
     public async Task<ActionResult<SellerDto>> RegisterSeller(SellerRequest request)
@@ -68,4 +83,25 @@ public class SellersController : ApiControllerBase
 
         return products.Select(p => p.ToDto()).ToList();
     }
+
+    [HttpGet("{id:int}/orders")]
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetSellerOrders(int id)
+    {
+        if (!IsAdmin && !await _db.Sellers.AnyAsync(s => s.Id == id && s.UserId == CurrentUserId))
+        {
+            return Forbid();
+        }
+
+        var orders = await _db.Orders
+            .Include(o => o.OrderItems).ThenInclude(i => i.Product)
+            .Include(o => o.Payment)
+            .Include(o => o.StatusHistory)
+            .Where(o => o.OrderItems.Any(i => i.Product.SellerId == id))
+            .AsNoTracking()
+            .ToListAsync();
+
+        return orders.Select(o => o.ToDto()).ToList();
+    }
 }
+

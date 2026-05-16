@@ -87,6 +87,76 @@ public class CartsController : ApiControllerBase
         return cart.ToDto();
     }
 
+
+
+    [HttpPost("merge")]
+    [Authorize]
+    public async Task<ActionResult<CartDto>> MergeGuestCart(MergeCartRequest request)
+    {
+        if (!CanAccessUser(request.UserId))
+        {
+            return OwnershipForbidden();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            return BadRequest("Guest cart session is required.");
+        }
+
+        var guestCart = await _db.Carts
+            .Include(c => c.Items).ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(c => c.SessionId == request.SessionId && c.UserId == null);
+
+        var userCart = await _db.Carts
+            .Include(c => c.Items).ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(c => c.UserId == request.UserId);
+
+        if (guestCart is null)
+        {
+            return userCart is null ? NotFound() : userCart.ToDto();
+        }
+
+        if (!FixedTimeEquals(guestCart.GuestAccessToken ?? string.Empty, request.GuestAccessToken))
+        {
+            return OwnershipForbidden();
+        }
+
+        if (userCart is null)
+        {
+            guestCart.UserId = request.UserId;
+            guestCart.SessionId = null;
+            guestCart.GuestAccessToken = null;
+            guestCart.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return guestCart.ToDto();
+        }
+
+        foreach (var guestItem in guestCart.Items.ToList())
+        {
+            var existing = userCart.Items.FirstOrDefault(i => i.ProductId == guestItem.ProductId);
+            if (existing is null)
+            {
+                userCart.Items.Add(new CartItem { ProductId = guestItem.ProductId, Quantity = Math.Min(guestItem.Quantity, guestItem.Product?.Stock ?? guestItem.Quantity) });
+            }
+            else
+            {
+                var stock = guestItem.Product?.Stock ?? existing.Quantity + guestItem.Quantity;
+                existing.Quantity = Math.Min(stock, existing.Quantity + guestItem.Quantity);
+            }
+        }
+
+        userCart.UpdatedAt = DateTime.UtcNow;
+        _db.Carts.Remove(guestCart);
+        await _db.SaveChangesAsync();
+
+        var merged = await _db.Carts
+            .Include(c => c.Items).ThenInclude(i => i.Product)
+            .AsNoTracking()
+            .FirstAsync(c => c.UserId == request.UserId);
+
+        return merged.ToDto();
+    }
+
     [HttpPut("items/{productId:int}")]
     public async Task<IActionResult> UpdateQuantity(int productId, [FromQuery] int? userId, [FromQuery] string? sessionId, CartItemRequest request)
     {

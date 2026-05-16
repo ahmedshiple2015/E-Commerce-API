@@ -46,6 +46,21 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("users/{id:int}/activate")]
+    public async Task<IActionResult> ActivateUser(int id)
+    {
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == id);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        user.EmailConfirmed = true;
+        user.IsSuspended = false;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpDelete("users/{id:int}")]
     public async Task<IActionResult> SoftDeleteUser(int id)
     {
@@ -60,6 +75,17 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("sellers")]
+    public async Task<IEnumerable<SellerDto>> GetSellers()
+    {
+        var sellers = await _db.Sellers
+            .IgnoreQueryFilters()
+            .Include(s => s.User)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return sellers.Select(s => s.ToDto()).ToList();
+    }
     [HttpPatch("sellers/{id:int}/approve")]
     public async Task<IActionResult> ApproveSeller(int id, [FromQuery] bool approved)
     {
@@ -105,3 +131,5 @@ public class AdminController : ControllerBase
         return banners.Select(b => b.ToDto()).ToList();
     }
 }
+
+
